@@ -5,7 +5,9 @@ import com.Amogh.url_shortener.entity.Url;
 import com.Amogh.url_shortener.exception.InvalidShortCodeException;
 import com.Amogh.url_shortener.exception.UrlNotFoundException;
 import com.Amogh.url_shortener.repository.UrlRepository;
-import com.Amogh.url_shortener.util.Base62Encoder;
+import jakarta.annotation.PostConstruct;
+import org.hashids.Hashids;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -13,8 +15,18 @@ public class UrlService {
 
     private final UrlRepository urlRepository;
 
+    @Value("${hashids.salt}")
+    private String salt;
+
+    private Hashids hashids;
+
     public UrlService(UrlRepository urlRepository){
         this.urlRepository=urlRepository;
+    }
+
+    @PostConstruct
+    public void init(){
+        hashids=new Hashids(salt);
     }
 
     public String shorten(String originalUrl){
@@ -23,7 +35,7 @@ public class UrlService {
         url=urlRepository.save(url);
         long savedId=url.getId();
 
-        String shortenCode= Base62Encoder.encode(savedId);
+        String shortenCode= hashids.encode(savedId);
 
         url.setShortCode(shortenCode);
         url=urlRepository.save(url);
@@ -32,13 +44,15 @@ public class UrlService {
     }
 
     public String resolve(String shortCode){
-        if(!Base62Encoder.isValidBase62(shortCode)){
-            throw new InvalidShortCodeException("invalid shortCode format : "+shortCode);
+        long[] decode=hashids.decode(shortCode);
 
+        if(decode.length==0){
+            throw new InvalidShortCodeException("Invalid short code : "+shortCode);
         }
-        Url url=urlRepository.findByShortCode(shortCode).orElseThrow(()-> new UrlNotFoundException("No URL for short code : "+shortCode));
-        return url.getOriginalUrl();
 
+        long id=decode[0];
+        Url url=urlRepository.findById(id).orElseThrow(()->new UrlNotFoundException("No URL found for the short code : "+shortCode));
+        return url.getOriginalUrl();
     }
 
 

@@ -1,5 +1,11 @@
 package com.Amogh.url_shortener.util;
 
+//this is the Base62encoder , written from the first principles (just a conversion ) and nothing else
+//NOT IN USE AND SUPPRESSED : this class is no longer used in shorten() or resolve
+//because hashids library is used , which combines id scrambling and encoding and vice versa
+//using hashids prevents sequential / guessable short code
+//kept in this repo as a record for reasoning purpose
+
 public class Base62Encoder {
 
     private static final String ALPHABET="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
