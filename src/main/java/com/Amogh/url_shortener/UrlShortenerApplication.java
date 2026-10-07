@@ -13,13 +13,6 @@ public class UrlShortenerApplication {
 		SpringApplication.run(UrlShortenerApplication.class, args);
 	}
 
-    @Bean
-    public CommandLineRunner testRunner(UrlService urlService) {
-        return args -> {
-            String code = urlService.shorten("https://www.example.com/some/long/path");
-            System.out.println("Generated short code: " + code);
-        };
 
-    }
 
 }
