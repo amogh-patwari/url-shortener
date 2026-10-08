@@ -26,7 +26,7 @@ public class UrlService {
 
     @PostConstruct
     public void init(){
-        hashids=new Hashids(salt);
+        hashids=new Hashids(salt,6);
     }
 
     public String shorten(String originalUrl){

@@ -11,15 +11,28 @@ A backend service that converts long URLs into short, unique codes — built as 
 - Maven
 
 ## How it works
-- Each URL is saved with an auto-incrementing DB id
-- That id is encoded into a short, unique code using **Base62 encoding** (62 symbols: 0-9, a-z, A-Z)
-- Reversible: short code → decoded back to id → DB lookup → original URL
+## How it works
+- **Shorten:** the long URL is saved, the DB generates an auto-increment id, and that id is encoded
+  into a short code using **Hashids** (a salted, reversible encoding). Sequential ids produce
+  scrambled-looking codes, so links can't be enumerated by counting up.
+- **Resolve:** the short code is decoded back to the id with Hashids, the row is looked up by id,
+  and the server responds with `302 Found` and a `Location` header pointing to the original URL.
+
+### Error handling
+| Case | Status |
+|---|---|
+| Short code can't be decoded (garbage / invalid) | `400 Bad Request` |
+| Code decodes fine, but no matching row exists | `404 Not Found` |
 
 ## Design decisions & known limitations (to be improved)
-- Currently uses plain Base62(id) — codes are sequential/guessable. Planning to add ID scrambling (Hashids-style) to prevent enumeration attacks.
-- `shorten()` currently performs two DB saves (insert, then update with the code). A Postgres SEQUENCE-based approach could reduce this to one atomic insert.
-- `spring.jpa.hibernate.ddl-auto=update` is used for local development convenience; a production setup would use Flyway/Liquibase migrations instead.
-
+- - Originally built a hand-written Base62 encoder (`Base62Encoder.java`, kept in the repo as a
+    record of the original design). Replaced by Hashids after identifying that raw Base62(id)
+    produces sequential, guessable codes (enumeration risk).
+- `shortCode` is still stored in the DB, but `resolve()` decodes the code to an id and uses
+  `findById`, so the column is currently write-only. Planned cleanup: remove the column, which
+  also removes the second save in `shorten()`.
+- `shorten()` performs two saves (insert, then update with the code). A single save becomes
+  possible once the `shortCode` column is removed.
 ## Setup
 1. Create a Postgres database named `url_shortener_db`
 2. Update `src/main/resources/application.properties` with your DB credentials
