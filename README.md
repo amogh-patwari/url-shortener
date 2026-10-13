@@ -42,6 +42,6 @@ A backend service that converts long URLs into short, unique codes — built as 
 - [x] Entity, Repository, Service layer (shorten/resolve)
 - [x] Exception handling (400/404)
 - [x] REST Controller
-- [ ] Redis caching for reads
+- [x] Redis caching for reads
 - [ ] Rate limiting
 - [ ] Dockerize
