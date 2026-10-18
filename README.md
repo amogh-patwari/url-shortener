@@ -91,3 +91,19 @@ Changing the salt later makes previously generated codes undecodable.
 - [ ] Async click analytics
 - [ ] Tests (JUnit, Mockito, Testcontainers)
 - [ ] CI with GitHub Actions
+
+
+##Request Path
+  Browser/Insomnia
+        |
+        v
+  Tomcat (embedded web server)
+        |
+        v
+  FILTER CHAIN  <-- RateLimitFilter lives here
+        |
+        v
+  DispatcherServlet  (Spring MVC's front door)
+        |
+        v
+  UrlController -> UrlService -> Redis/Postgres
