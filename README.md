@@ -94,16 +94,4 @@ Changing the salt later makes previously generated codes undecodable.
 
 
 ##Request Path
-  Browser/Insomnia
-        |
-        v
-  Tomcat (embedded web server)
-        |
-        v
-  FILTER CHAIN  <-- RateLimitFilter lives here
-        |
-        v
-  DispatcherServlet  (Spring MVC's front door)
-        |
-        v
-  UrlController -> UrlService -> Redis/Postgres
+[ Browser / Insomnia ] ➔ [ Tomcat ] ➔ [ RateLimitFilter ] ➔ [ DispatcherServlet ] ➔ [ UrlController ] ➔ [ UrlService ] ➔ [ Redis / Postgres ]
