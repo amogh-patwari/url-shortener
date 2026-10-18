@@ -52,6 +52,10 @@ In progress. Core shorten/resolve pipeline, Hashids obfuscation, and Redis cachi
 - `spring.jpa.hibernate.ddl-auto=update` is for local development; production would use Flyway or Liquibase migrations.
 - Secrets (DB password, salt) currently live in `application.properties`; planned move to environment variables.
 - No URL validation on input, no custom aliases, no click analytics yet.
+- Rate limits are in-memory and per instance; a multi-instance setup would store buckets in Redis.
+- Buckets are never evicted, so the map grows with each new client IP.
+- Client identity uses getRemoteAddr(); behind a proxy it should use X-Forwarded-For.
+- Each POST /api/shorten creates a new code, even for a URL already shortened (keeps links independent for per-link analytics).
 
 ## Setup
 
@@ -86,7 +90,7 @@ Changing the salt later makes previously generated codes undecodable.
 - [x] REST controller (201 / 302)
 - [x] Hashids ID obfuscation
 - [x] Redis caching with Postgres fallback
-- [ ] Rate limiting (Bucket4j)
+- [x] Rate limiting (Bucket4j)
 - [ ] Dockerize app + Postgres + Redis with Docker Compose
 - [ ] Async click analytics
 - [ ] Tests (JUnit, Mockito, Testcontainers)
