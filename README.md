@@ -3,13 +3,14 @@
 A backend service that converts long URLs into short, non-guessable codes and redirects visitors to the original link. Built with Spring Boot as a learning project that goes beyond basic CRUD: ID obfuscation, caching, and resilience.
 
 ## Status
-In progress. Core shorten/resolve pipeline, Hashids obfuscation, and Redis caching are done.
+In progress. Core shorten/resolve pipeline, Hashids obfuscation, Redis caching, rate limiting, and Docker Compose setup are done.
 
 ## Tech Stack
 - Java, Spring Boot, Maven
 - Spring Data JPA + PostgreSQL
 - Hashids (reversible ID obfuscation)
-- Redis (cache-aside), run via Docker
+- Redis (cache-aside)
+- Docker + Docker Compose (multi-stage build, one-command setup)
 
 ## API
 
@@ -50,7 +51,7 @@ In progress. Core shorten/resolve pipeline, Hashids obfuscation, and Redis cachi
 - `shortCode` is still stored in the DB but `resolve()` uses `findById`, so the column is write-only. Removing it would also remove the second save in `shorten()`.
 - `shorten()` performs two saves (insert, then update). A single save becomes possible once the column is removed.
 - `spring.jpa.hibernate.ddl-auto=update` is for local development; production would use Flyway or Liquibase migrations.
-- Secrets (DB password, salt) currently live in `application.properties`; planned move to environment variables.
+- - Secrets are passed via environment variables (`.env`) when running with Docker. Running locally without Docker still reads them from `application.properties`.
 - No URL validation on input, no custom aliases, no click analytics yet.
 - Rate limits are in-memory and per instance; a multi-instance setup would store buckets in Redis.
 - Buckets are never evicted, so the map grows with each new client IP.
@@ -59,14 +60,39 @@ In progress. Core shorten/resolve pipeline, Hashids obfuscation, and Redis cachi
 
 ## Setup
 
-**Prerequisites:** Java, Maven, PostgreSQL, Docker
+### Run with Docker (recommended)
+
+**Prerequisite:** Docker Desktop.
+
+1. Clone the repo and copy the example env file:
+```bash
+   git clone https://github.com/amogh-patwari/url-shortener
+   cd url-shortener
+   cp .env.example .env
+```
+2. Edit `.env` and set `DB_PASSWORD` and `HASHIDS_SALT` (no quotes, spaces, or `$`).
+3. Start everything (app, Postgres, Redis):
+```bash
+   docker compose up -d --build
+```
+4. Try it at `http://localhost:8080`:
+    - `POST /api/shorten` with `{"url": "https://example.com"}`
+    - `GET /api/{code}`
+
+Stop: `docker compose down` (data is kept in the `pgdata` volume).
+Stop and delete data: `docker compose down -v`.
+
+Changing `HASHIDS_SALT` later makes previously generated codes undecodable.
+
+### Run locally without Docker
+
+**Prerequisites:** Java, Maven, PostgreSQL, Docker (for Redis)
 
 1. Create a Postgres database named `url_shortener_db`.
 2. Start Redis:
-```
+```bash
    docker run --name redis-url -p 6379:6379 -d redis:7.2
 ```
-After a restart, use `docker start redis-url`.
 3. In `src/main/resources/application.properties`, set:
 ```properties
    spring.datasource.url=jdbc:postgresql://localhost:5432/url_shortener_db
@@ -78,9 +104,8 @@ After a restart, use `docker start redis-url`.
    spring.data.redis.connect-timeout=500ms
    spring.data.redis.timeout=500ms
 ```
-Changing the salt later makes previously generated codes undecodable.
 4. Run:
-```
+```bash
    ./mvnw spring-boot:run
 ```
 
@@ -91,11 +116,11 @@ Changing the salt later makes previously generated codes undecodable.
 - [x] Hashids ID obfuscation
 - [x] Redis caching with Postgres fallback
 - [x] Rate limiting (Bucket4j)
-- [ ] Dockerize app + Postgres + Redis with Docker Compose
+- [x] Dockerize app + Postgres + Redis with Docker Compose
 - [ ] Async click analytics
 - [ ] Tests (JUnit, Mockito, Testcontainers)
 - [ ] CI with GitHub Actions
 
 
 ##Request Path
-[ Browser / Insomnia ] ➔ [ Tomcat ] ➔ [ RateLimitFilter ] ➔ [ DispatcherServlet ] ➔ [ UrlController ] ➔ [ UrlService ] ➔ [ Redis / Postgres ]
+**Docker setup:** Compose runs three containers (app, Postgres, Redis) on a private network. Only the app's port 8080 is published. Postgres data persists in a named volume, and Postgres has a healthcheck so the app only starts once the database is ready.
