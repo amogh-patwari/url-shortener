@@ -43,12 +43,8 @@ public class UrlService {
         url.setOriginalUrl(originalUrl);
         url=urlRepository.save(url);
         long savedId=url.getId();
-
-        String shortenCode= hashids.encode(savedId);
-
-        url.setShortCode(shortenCode);
-        url=urlRepository.save(url);
-        return shortenCode;
+        String shortcode=hashids.encode(savedId);
+        return shortcode;
 
     }
 

@@ -20,8 +20,7 @@ public class Url {
     @Column(nullable = false , columnDefinition = "TEXT")
     private String originalUrl;
 
-    @Column(unique = true)
-    private String shortCode;
+
 
     @CreationTimestamp
     private LocalDateTime createdAt;

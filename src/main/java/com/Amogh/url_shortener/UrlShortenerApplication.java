@@ -16,3 +16,10 @@ public class UrlShortenerApplication {
 
 
 }
+
+//docker compose up -d
+
+//docker compose down
+//docker compose ps
+//docker compose logs -f app
+
