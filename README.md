@@ -46,10 +46,10 @@ In progress. Core shorten/resolve pipeline, Hashids obfuscation, Redis caching, 
 - **DTOs instead of exposing the entity:** prevents mass assignment and keeps the API contract independent of the DB model.
 - **Cache only successful lookups:** 404s are never cached.
 - **TTL of 24 hours:** bounds memory use and limits how stale an entry can get.
+- **The short code is derived from the row id with Hashids and never stored, so shorten() does a single insert and the code can’t drift out of sync with the id.
 
 ## Known limitations / planned improvements
-- `shortCode` is still stored in the DB but `resolve()` uses `findById`, so the column is write-only. Removing it would also remove the second save in `shorten()`.
-- `shorten()` performs two saves (insert, then update). A single save becomes possible once the column is removed.
+
 - `spring.jpa.hibernate.ddl-auto=update` is for local development; production would use Flyway or Liquibase migrations.
 - - Secrets are passed via environment variables (`.env`) when running with Docker. Running locally without Docker still reads them from `application.properties`.
 - No URL validation on input, no custom aliases, no click analytics yet.
